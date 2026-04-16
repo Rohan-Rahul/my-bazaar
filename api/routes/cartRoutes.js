@@ -9,6 +9,9 @@ router.get('/', verifyToken, async(req,res)=>{
     const cart = await Cart.findOne({
       user: req.user.id
     }).populate('cartItems.product');
+    if(!cart){
+      return res.status(200).json({cartItems: []});
+    }
     res.status(200).json(cart);
   } catch(error){
     res.status(500).json({

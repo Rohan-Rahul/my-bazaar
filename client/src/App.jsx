@@ -3,9 +3,11 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import ProductDetails from './pages/ProductDetails';
+import { CartProvider } from './context/CartContext';
 
 function App(){
   return(
+    <CartProvider>
     <Router>
       <Navbar/>
       <Routes>
@@ -14,6 +16,7 @@ function App(){
         <Route path="/product/:id" element={<ProductDetails />} />
       </Routes>
     </Router>
+    </CartProvider>
   );
 }
 

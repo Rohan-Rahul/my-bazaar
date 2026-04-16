@@ -1,12 +1,15 @@
 import {useState,useEffect} from 'react';
 import {useParams, Link} from 'react-router-dom';
 import axios from 'axios';
+import {useCart} from '../context/CartContext';
 
 function ProductDetails(){
   const {id} = useParams();
   const [product,setProduct] = useState(null);
   const [loading,setLoading] = useState(true);
   const [selectedSize,setSelectedSize] = useState('S');
+
+  const {fetchCart,setIsCartOpen} = useCart();
 
   useEffect(()=>{
     const fetchProduct = async () => {
@@ -43,7 +46,8 @@ function ProductDetails(){
           }
         }
       );
-      alert('Product added to cart successfully!');
+      fetchCart();
+      setIsCartOpen(true);
     } catch (error){
       console.error('Error adding to cart: ', error.message?.data || error.message);
       alert('Failed to add product tot cart. Please ensure you are logged in.');
