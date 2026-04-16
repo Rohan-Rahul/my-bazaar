@@ -20,7 +20,7 @@ router.get('/', verifyToken, async(req,res)=>{
 
 //add to cart or update quantity
 router.post('/', verifyToken, async(req,res)=>{
-  const {product, quantity} = req.body;
+  const {productId, quantity, size} = req.body;
 
   try{
     let cart = await Cart.findOne({
@@ -29,7 +29,7 @@ router.post('/', verifyToken, async(req,res)=>{
 
     if(cart){
       //cart exists
-      const itemIndex = cart.cartItems.findIndex(p => p.product.toString() === product);
+      const itemIndex = cart.cartItems.findIndex(p => p.product.toString() === productId && p.size === size);
 
       if (itemIndex > -1) {
         //product exists in cart, update quantity
@@ -37,7 +37,7 @@ router.post('/', verifyToken, async(req,res)=>{
       } else {
         //product doesn't exist, add new item
         cart.cartItems.push({
-          product,quantity
+          product: productId,quantity,size
         });
       }
       cart = await cart.save();
@@ -47,7 +47,7 @@ router.post('/', verifyToken, async(req,res)=>{
       const newCart =  await Cart.create({
         user: req.user.id,
         cartItems: [{
-          product,quantity
+          product: productId,quantity,size
         }]
       });
       return res.status(201).json(newCart);

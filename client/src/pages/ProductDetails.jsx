@@ -22,6 +22,34 @@ function ProductDetails(){
     fetchProduct();
   }, [id]);
 
+  const handleAddToCart = async () => {
+    try{
+      const token = localStorage.getItem('token');
+      if(!token){
+        alert('Please login to add items to your cart');
+        return;
+      }
+
+      await axios.post(
+        'http://localhost:3000/api/cart',
+        {
+          productId: product._id,
+          quantity: 1,
+          size: selectedSize
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      alert('Product added to cart successfully!');
+    } catch (error){
+      console.error('Error adding to cart: ', error.message?.data || error.message);
+      alert('Failed to add product tot cart. Please ensure you are logged in.');
+    }
+  };
+
   if(loading) return <div className='p-10 text-center'>Loading product...</div>;
   if(!product) return <div className='p-10 text-center'>Product not found</div>;
 
@@ -75,7 +103,9 @@ function ProductDetails(){
           </div>
 
           {/* Add to cart button */}
-          <button className='w-full bg-black text-white py-4 rounded-full font-semibold hover:bg-gray-8 transition-colors mb-8'>Add to Cart</button>
+          <button 
+          onClick={handleAddToCart}
+          className='w-full bg-black text-white py-4 rounded-full font-semibold hover:bg-gray-8 transition-colors mb-8'>Add to Cart</button>
 
           {/* Description Accordion */}
           <div className='border-t border-gray-200 py-4'>
