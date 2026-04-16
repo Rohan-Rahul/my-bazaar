@@ -63,27 +63,42 @@ router.post('/', verifyToken, async(req,res)=>{
   }
 });
 
+//update specific item quantity
+router.put('/', verifyToken, async(req, res) => {
+  const { productId, size, quantity } = req.body;
+  try {
+    let cart = await Cart.findOne({ user: req.user.id });
+    if (!cart) return res.status(404).json({ message: 'Cart not found' });
+
+    const itemIndex = cart.cartItems.findIndex(
+      p => p.product.toString() === productId && p.size === size
+    );
+
+    if (itemIndex > -1) {
+      cart.cartItems[itemIndex].quantity = quantity; 
+      cart = await cart.save();
+      return res.status(200).json(cart);
+    }
+    res.status(404).json({ message: 'Item not found in cart' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating quantity', error: error.message });
+  }
+});
+
 //remove specific item from cart
-router.delete('/:productId', verifyToken, async(req,res)=>{
-  try{
-    let cart = await Cart.findOne({
-      user: req.user.id
-    });
-    if(cart){
+router.delete('/item/:productId/:size', verifyToken, async(req, res) => {
+  try {
+    let cart = await Cart.findOne({ user: req.user.id });
+    if (cart) {
       cart.cartItems = cart.cartItems.filter(
-        (item)=> item.product.toString() !== req.params.productId
+        (item) => !(item.product.toString() === req.params.productId && item.size === req.params.size)
       );
       cart = await cart.save();
       return res.status(200).json(cart);
     }
-    res.status(404).json({
-      message: 'Cart not found'
-    });
-  } catch(error){
-    res.status(500).json({
-      message: 'Error removing item',
-      error: error.message
-    });
+    res.status(404).json({ message: 'Cart not found' });
+  } catch(error) {
+    res.status(500).json({ message: 'Error removing item', error: error.message });
   }
 });
 

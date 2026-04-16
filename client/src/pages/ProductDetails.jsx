@@ -2,6 +2,7 @@ import {useState,useEffect} from 'react';
 import {useParams, Link} from 'react-router-dom';
 import axios from 'axios';
 import {useCart} from '../context/CartContext';
+import { cartService } from '../services/api';
 
 function ProductDetails(){
   const {id} = useParams();
@@ -27,29 +28,11 @@ function ProductDetails(){
 
   const handleAddToCart = async () => {
     try{
-      const token = localStorage.getItem('token');
-      if(!token){
-        alert('Please login to add items to your cart');
-        return;
-      }
-
-      await axios.post(
-        'http://localhost:3000/api/cart',
-        {
-          productId: product._id,
-          quantity: 1,
-          size: selectedSize
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      await cartService.addToCart(product._id,1 ,selectedSize);
       fetchCart();
       setIsCartOpen(true);
     } catch (error){
-      console.error('Error adding to cart: ', error.message?.data || error.message);
+      console.error('Error adding to cart: ', error);
       alert('Failed to add product tot cart. Please ensure you are logged in.');
     }
   };

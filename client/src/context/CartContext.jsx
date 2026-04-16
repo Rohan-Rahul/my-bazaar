@@ -1,5 +1,5 @@
 import {createContext, useState, useEffect, useContext} from 'react';
-import axios from 'axios';
+import {cartService} from '../services/api';
 
 const CartContext = createContext();
 
@@ -10,15 +10,8 @@ export const CartProvider = ({children}) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const fetchCart = async () => {
-    const token = localStorage.getItem('token');
-    if(!token) return;
-
     try {
-      const response = await axios.get('http://localhost:3000/api/cart',{
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await cartService.getCart();
       setCartItems(response.data.cartItems || []);
     } catch (error) {
       console.error('Error fetching cart:',error);

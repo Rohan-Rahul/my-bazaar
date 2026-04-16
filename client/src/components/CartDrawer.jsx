@@ -1,5 +1,6 @@
 import {useCart} from '../context/CartContext';
 import axios from 'axios';
+import { cartService } from '../services/api';
 
 function CartDrawer(){
   const {isCartOpen,setIsCartOpen,cartItems,fetchCart} = useCart();
@@ -10,32 +11,22 @@ function CartDrawer(){
     return acc + (price*item.quantity);
   }, 0);
 
-  const handleUpdateQuantity = async (productId, size, newQuantity) =>{
-    if(newQuantity<1) return;
-    try{
-      const token = localStorage.getItem('token');
-      await axios.put(
-        'http://localhost:3000/api/cart',
-        {productId, size, quantity: newQuantity},
-        {headers: {Authorization: `Bearer ${token}`}}
-      );
+const handleUpdateQuantity = async (productId, size, newQuantity) => {
+    if (newQuantity < 1) return;
+    try {
+      await cartService.updateQuantity(productId, size, newQuantity);
       fetchCart();
     } catch (error) {
       console.error('Error updating quantity:', error);
     }
   };
 
-  const handleRemoveItem = async (productId,size) => {
-    try{
-      const token = localStorage.getItem('token');
-      //using data payload in delete request for axios
-      await axios.delete('http://localhost:3000/api/cart', {
-        headers: {Authorization: `Bearer ${token}`},
-        data: {productId, size}
-      });
+const handleRemoveItem = async (productId, size) => {
+    try {
+      await cartService.removeItem(productId, size);
       fetchCart();
-    } catch (error){
-      console.error('Error removing item:',error);
+    } catch (error) {
+      console.error('Error removing item:', error);
     }
   };
 
