@@ -22,8 +22,7 @@ function App() {
             <Route path='/signup' element={
               <Signup />
             }/>
-            <Route path='/product/:id' element={<ProductDetails />} />
-            {/* 
+            <Route path='/product/:id' element={<ProductDetails />} /> 
             <Route
               path='/checkout'
               element={
@@ -32,7 +31,6 @@ function App() {
                 </ProtectedRoute>
               }            
             /> 
-            */}
           </Routes>
         </Router>
       </CartProvider>

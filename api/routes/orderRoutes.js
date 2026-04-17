@@ -1,17 +1,25 @@
 const express = require('express');
 const Order = require('../models/Order');
+const Cart = require('../models/Cart');
 const {verifyToken,verifyAdmin} = require('../middleware/auth');
 const router = express.Router();
 
 //create new order
 router.post('/',verifyToken,async(req,res)=>{
-  const newOrder = new Order({
+  try{
+    const newOrder = new Order({
     ...req.body,
     user: req.user.id
   });
 
-  try{
     const savedOrder = await newOrder.save();
+
+    //clear user cart after order is placed
+    await Cart.findOneAndUpdate(
+      {user:req.user.id},
+      {cartItems:[]}
+    );
+
     res.status(201).json(savedOrder);
   } catch(error){
     res.status(500).json({
@@ -22,11 +30,11 @@ router.post('/',verifyToken,async(req,res)=>{
 });
 
 //get user orders
-router.get('/find', verifyToken, async(req,res)=>{
+router.get('/myorders', verifyToken, async(req,res)=>{
   try{
     const orders = await Order.find({
       user: req.user.id
-    });
+    }).sort({createdAt: -1});
     res.status(200).json(orders);
   } catch (error){
     res.status(500).json({
@@ -39,7 +47,7 @@ router.get('/find', verifyToken, async(req,res)=>{
 //get all order (admin only)]
 router.get('/',verifyAdmin, async (req,res)=>{
   try{
-    const orders = await Order.find();
+    const orders = await Order.find().populate('user','name email');
     res.status(200).json(orders);
   } catch(error){
     res.status(500).json({
