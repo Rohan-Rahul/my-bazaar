@@ -41,6 +41,9 @@ function Navbar(){
             >
               Logout
             </button>
+            {isAuthenticated && (
+              <Link to='/orders' className='hover:text-black transition-colors'>Orders</Link>
+            )}
           </div>
         ) : (
           <Link to='/login' className='hover:text-black transition-colors'>Login</Link>

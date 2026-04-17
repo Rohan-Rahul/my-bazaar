@@ -1,3 +1,8 @@
 {
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "nodemailer": "^8.0.5",
+    "razorpay": "^2.9.6"
+  }
 }

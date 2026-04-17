@@ -5,6 +5,8 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ProductDetails from "./pages/ProductDetails";
+import Checkout from './pages/Checkout';
+import Orders from './pages/Order';
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -27,10 +29,18 @@ function App() {
               path='/checkout'
               element={
                 <ProtectedRoute>
-                  <Checkout/>
+                  <Checkout />
                 </ProtectedRoute>
               }            
             /> 
+            <Route 
+              path='/orders'
+              element={
+                <ProtectedRoute>
+                  <Orders />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </Router>
       </CartProvider>
