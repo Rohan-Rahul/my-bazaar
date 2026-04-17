@@ -7,27 +7,34 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({children}) => {
   const [user,setUser] = useState(null);
-  const [loading,setLoading] = useState(null);
+  const [loading,setLoading] = useState(true);
 
   //check is user is logged in
   useEffect(()=>{
-    const checkAuth = async() => {
+    const checkAuth = async () => {
       const token = localStorage.getItem('token');
-      if(token){
-        try{
-          const resposne = await api.get('/users/profile');
-          setUser(response.data);
-        } catch(error){
-          localStorage.removeItem('token');
-          setUser(null);
-        }
+
+      //if no token, stop loading and stay as guest
+      if(!token){
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+      
+      try{
+        const response = await api.get('/users/profile');
+        setUser(response.data);
+      } catch(error){
+        localStorage.removeItem('token');
+        setUser(null);
+      } finally{
+        setLoading(false);
+      }
     };
     checkAuth();
   }, []);
 
   const login = (userData, token) => {
+    if(!token) return;
     localStorage.setItem('token', token);
     setUser(userData);
   };

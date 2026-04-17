@@ -14,12 +14,21 @@ function Signup(){
     e.preventDefault();
     try{
       const response = await api.post('/users/register', formData);
-      login(response.data.user, response.data.token);
-      navigate('/');
+
+      if(response?.data?.token){
+        login(response.data.user, response.data.token);
+        navigate('/');
+      }else{
+        alert('Registration successful! Please login');
+        navigate('/login');
+      }
+
     } catch(error){
-      alert(error.response?.message) || 'Registration failed'
-    };
-  }
+      const errorMessage = error.response?.data?.message || "An unexpected error occurred";
+      console.error("Submission Error:", error);
+      alert(errorMessage);
+    }
+  };
 
 return (
   <div className="min-h-[80vh] flex items-center justify-center bg-white px-4">
@@ -33,7 +42,7 @@ return (
             <input 
               type="text" 
               className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-black outline-none transition-all"
-              placeholder="Rahul Parmar"
+              placeholder="Your Name"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               required
@@ -44,7 +53,7 @@ return (
             <input 
               type="email" 
               className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-black outline-none transition-all"
-              placeholder="rahul@example.com"
+              placeholder="example@google.com"
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
               required

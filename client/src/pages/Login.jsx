@@ -15,14 +15,20 @@ function Login(){
       const response = await api.post('users/login', {
         email,password
       });
-      
+    
       //login function handles localStorage and global state
-      login(response.data.user, response.user.token);
-
-      navigate('/');
+      if(response?.data?.token){
+        login(response.data.user, response.data.token);
+        navigate('/');
+      } else {
+        console.error("Auth failed: Token not found in response", response.data);
+        alert("Account created, but we couldn't log you in automatically. Please sign in manually.");
+        navigate('/login');
+        }
     } catch (error) {
-      console.error('Login Error: ', error.response?.data || error.message);
-      alert('Login failed. Check console for details');
+      const errorMessage = error.response?.data?.message || "An unexpected error occurred";
+      console.error("Submission Error:", error);
+      alert(errorMessage);
     }
   };
 

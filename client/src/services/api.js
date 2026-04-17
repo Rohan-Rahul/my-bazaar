@@ -21,7 +21,9 @@ api.interceptors.response.use(
   (error) => {
     if(error.response && error.response.status === 401){
       localStorage.removeItem('token');
+      if(!window.location.pathname.includes('/login')){
       window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -31,12 +33,12 @@ api.interceptors.response.use(
 export const cartService = {
   getCart: ()=> api.get('/cart'),
   
-  addToCart: (productId,quantity,size) => api.post('/cart',{productId,quantity,size}),
+  addToCart: (productId,quantity,selectedOption) => api.post('/cart',{productId,quantity,selectedOption}),
 
-  updateQuantity: (productId,size,quantity)=>api.put('/cart', {productId,size,quantity}),
+  updateQuantity: (productId,selectedOption,quantity)=>api.put('/cart', {productId,selectedOption,quantity}),
 
-  removeItem: (productId,size) => 
-    api.delete(`/cart/item/${productId}/${size}`),
+  removeItem: (productId,selectedOption) => 
+    api.delete(`/cart/item/${productId}/${selectedOption}`),
 };
 
 export default api;

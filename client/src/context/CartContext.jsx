@@ -10,6 +10,11 @@ export const CartProvider = ({children}) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const fetchCart = async () => {
+    const token = localStorage.getItem('token');
+    if(!token){
+      setCartItems([]);
+      return;
+    }
     try {
       const response = await cartService.getCart();
       setCartItems(response.data.cartItems || []);
