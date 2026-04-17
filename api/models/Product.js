@@ -5,7 +5,8 @@ const productSchema = new mongoose.Schema({
   description: {type: String, required: true},
   price: {type: Number, required: true},
   images: [{type: String}], //changed from single url to array
-  sizes: [{type: String}], //['S','M',...]
+  variantType: {type: String}, //eg "Size", "Material","Color"
+  variantOptions: [{type: String}], //eg ["S","M"], ["Gold","Silver"]
   category: {type: String, required:true},
   isSeasonal: {type: Boolean, default: false},
   seasonalTag: {type: String},

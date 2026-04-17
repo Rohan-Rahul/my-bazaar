@@ -1,5 +1,4 @@
 import {useCart} from '../context/CartContext';
-import axios from 'axios';
 import { cartService } from '../services/api';
 
 function CartDrawer(){
@@ -11,19 +10,19 @@ function CartDrawer(){
     return acc + (price*item.quantity);
   }, 0);
 
-const handleUpdateQuantity = async (productId, size, newQuantity) => {
+const handleUpdateQuantity = async (productId, selectedOption, newQuantity) => {
     if (newQuantity < 1) return;
     try {
-      await cartService.updateQuantity(productId, size, newQuantity);
+      await cartService.updateQuantity(productId, selectedOption, newQuantity);
       fetchCart();
     } catch (error) {
       console.error('Error updating quantity:', error);
     }
   };
 
-const handleRemoveItem = async (productId, size) => {
+const handleRemoveItem = async (productId, selectedOption) => {
     try {
-      await cartService.removeItem(productId, size);
+      await cartService.removeItem(productId, selectedOption);
       fetchCart();
     } catch (error) {
       console.error('Error removing item:', error);

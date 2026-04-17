@@ -23,7 +23,7 @@ router.get('/', verifyToken, async(req,res)=>{
 
 //add to cart or update quantity
 router.post('/', verifyToken, async(req,res)=>{
-  const {productId, quantity, size} = req.body;
+  const {productId, quantity, selectedOption} = req.body;
 
   try{
     let cart = await Cart.findOne({
@@ -32,7 +32,7 @@ router.post('/', verifyToken, async(req,res)=>{
 
     if(cart){
       //cart exists
-      const itemIndex = cart.cartItems.findIndex(p => p.product.toString() === productId && p.size === size);
+      const itemIndex = cart.cartItems.findIndex(p => p.product.toString() === productId && p.selectedOption === siselectedOption);
 
       if (itemIndex > -1) {
         //product exists in cart, update quantity
@@ -40,7 +40,7 @@ router.post('/', verifyToken, async(req,res)=>{
       } else {
         //product doesn't exist, add new item
         cart.cartItems.push({
-          product: productId,quantity,size
+          product: productId,quantity,selectedOption
         });
       }
       cart = await cart.save();
@@ -50,7 +50,7 @@ router.post('/', verifyToken, async(req,res)=>{
       const newCart =  await Cart.create({
         user: req.user.id,
         cartItems: [{
-          product: productId,quantity,size
+          product: productId,quantity,selectedOption
         }]
       });
       return res.status(201).json(newCart);
@@ -65,13 +65,13 @@ router.post('/', verifyToken, async(req,res)=>{
 
 //update specific item quantity
 router.put('/', verifyToken, async(req, res) => {
-  const { productId, size, quantity } = req.body;
+  const { productId, selectedOption, quantity } = req.body;
   try {
     let cart = await Cart.findOne({ user: req.user.id });
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
 
     const itemIndex = cart.cartItems.findIndex(
-      p => p.product.toString() === productId && p.size === size
+      p => p.product.toString() === productId && p.selectedOption === selectedOption
     );
 
     if (itemIndex > -1) {
@@ -86,12 +86,12 @@ router.put('/', verifyToken, async(req, res) => {
 });
 
 //remove specific item from cart
-router.delete('/item/:productId/:size', verifyToken, async(req, res) => {
+router.delete('/item/:productId/:selectedOption', verifyToken, async(req, res) => {
   try {
     let cart = await Cart.findOne({ user: req.user.id });
     if (cart) {
       cart.cartItems = cart.cartItems.filter(
-        (item) => !(item.product.toString() === req.params.productId && item.size === req.params.size)
+        (item) => !(item.product.toString() === req.params.productId && item.selectedOption === req.params.selectedOption)
       );
       cart = await cart.save();
       return res.status(200).json(cart);
