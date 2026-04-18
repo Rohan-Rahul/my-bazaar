@@ -3,12 +3,12 @@ import api from "../services/api";
 
 function Orders() {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoadin] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await api.get("/orders/find");
+        const response = await api.get("/orders/myorders");
         setOrders(response.data);
       } catch (error) {
         console.error("Error fetching orders: ", error);
@@ -67,7 +67,7 @@ function Orders() {
                       </span>
                     </span>
                     <span className='font-medium'>
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ₹{(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -78,7 +78,7 @@ function Orders() {
                   {new Date(order.createdAt).toLocaleDateString()}
                 </p>
                 <p className='text-lg font-bold'>
-                  Total: ${order.totalPrice.toFixed(2)}
+                  Total: ₹{order.totalPrice.toFixed(2)}
                 </p>
               </div>
             </div>
