@@ -32,7 +32,7 @@ router.post('/', verifyToken, async(req,res)=>{
 
     if(cart){
       //cart exists
-      const itemIndex = cart.cartItems.findIndex(p => p.product.toString() === productId && p.selectedOption === siselectedOption);
+      const itemIndex = cart.cartItems.findIndex(p => p.product.toString() === productId && p.selectedOption === selectedOption);
 
       if (itemIndex > -1) {
         //product exists in cart, update quantity
