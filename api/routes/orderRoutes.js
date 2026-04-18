@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
+const User = require('../models/User');
 const sendOrderEmail = require('../utils/emailService');
 const {verifyToken,verifyAdmin} = require('../middleware/auth');
 const router = express.Router();
@@ -76,8 +77,15 @@ router.post('/verify', verifyToken, async(req,res) => {
       cartItems: []
     });
 
+    const fullUser = await User.findById(req.user.id);
+
     //send confirmation email
-    sendOrderEmail(req.user.email, savedOrder);
+    if(fullUser && fullUser.email){
+      sendOrderEmail(req.user.email, savedOrder);
+    } else {
+      console.log('Could not send email: User email not found in database.');
+    }
+    
 
     res.status(201).json({
       message: 'Order placed successfully',

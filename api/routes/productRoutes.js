@@ -6,10 +6,20 @@ const router = express.Router();
 // get all products
 router.get('/', async (req, res) => {
   try {
-    const { category, isSeasonal } = req.query;
+    const { category, isSeasonal, search } = req.query;
     let query = {};
+
     if (category) query.category = category;
     if (isSeasonal) query.isSeasonal = isSeasonal === 'true';
+
+
+    //add regex search for title
+    if(search){
+      query.title = {
+        $regex: search,
+        $options: 'i' //makes it case insensitive
+      };
+    }
 
     const products = await Product.find(query);
     res.status(200).json(products);
