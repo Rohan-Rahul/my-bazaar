@@ -1,6 +1,7 @@
 const express = require('express');
 const Product = require('../models/Product');
 const { verifyAdmin } = require('../middleware/auth');
+const upload = require('../config/cloudinary');
 const router = express.Router();
 
 // get all products
@@ -50,9 +51,15 @@ router.get('/:id', async (req, res) => {
 });
 
 // create a new product (admin only)
-router.post('/', verifyAdmin, async (req, res) => {
+router.post('/', verifyAdmin,upload.array('images',5), async (req, res) => {
   try {
-    const newProduct = new Product(req.body);
+    //extract cloudinary url from uploaded files
+    const imageUrls = req.files.map(file => file.path);
+
+    const newProduct = new Product({
+      ...req.body,
+    images: imageUrls});
+    
     const savedProduct = await newProduct.save();
     res.status(201).json(savedProduct);
   } catch (error) {
