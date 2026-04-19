@@ -15,7 +15,10 @@ const ProductForm =()=>{
     seasonalTag:''
   });
 
-  const [images,setImages] = useState([]);
+  const [generalImages, setGeneralImages] = useState([]);
+  const [colorMappings, setColorMappings] = useState([{
+    color: '', file: null
+  }]);
   const [uploading, setUploading] = useState(false);
 
   const handleInputChange = (e) => {
@@ -26,9 +29,15 @@ const ProductForm =()=>{
     });
   };
   
-  const handleFileChange = (e) => {
-    setImages(e.target.files);
-  };
+ const handleColorMappingChange = (index, field,value) => {
+  const newMappings = [...colorMappings];
+  newMappings[index][field] = value;
+  setColorMappings(newMappings);
+ }
+
+ const addColorMapping = () => {
+  setColorMappings([...colorMappings, {color: '', file: null}]);
+ }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,9 +53,16 @@ const ProductForm =()=>{
     //handle variantOptions conversion from string to array for backend
 
     //append multiple files
-    for(let i = 0; i <images.length; i++){
-      data.append('images',images[i]);
+    for(let i = 0; i <generalImages.length; i++){
+      data.append('generalImages',generalImages[i]);
     }
+
+    colorMappings.forEach((mapping) => {
+      if(mapping.color && mapping.file){
+        data.append('colorNames', mapping.color);
+        data.append('colorFiles', mapping.file);
+      }
+    })
 
     const token = localStorage.getItem('token');
 
@@ -69,7 +85,6 @@ const ProductForm =()=>{
       <h2 className="text-2xl font-bold mb-6">Add New Product</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input type="text" name="title" placeholder="Product Title" onChange={handleInputChange} className="w-full p-2 border rounded" required />
-        
         <textarea name="description" placeholder="Description" onChange={handleInputChange} className="w-full p-2 border rounded" required />
         
         <div className="grid grid-cols-2 gap-4">
@@ -84,28 +99,45 @@ const ProductForm =()=>{
           <input type="text" name="variantOptions" placeholder="Options (comma separated)" onChange={handleInputChange} className="flex-1 p-2 border rounded" />
         </div>
 
+        <div className="border p-4 rounded bg-gray-50">
+          <h3 className="font-bold mb-2">Color Variants (Required if using colors)</h3>
+          {colorMappings.map((mapping, index) => (
+            <div key={index} className="flex gap-4 mb-2 items-center">
+              <input 
+                type="text" 
+                placeholder="Color Name (e.g. Black)" 
+                value={mapping.color}
+                onChange={(e) => handleColorMappingChange(index, 'color', e.target.value)}
+                className="flex-1 p-2 border rounded"
+              />
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => handleColorMappingChange(index, 'file', e.target.files[0])}
+                className="flex-1"
+              />
+            </div>
+          ))}
+          <button type="button" onClick={addColorMapping} className="text-sm bg-gray-200 px-3 py-1 rounded mt-2">
+            + Add Another Color
+          </button>
+        </div>
+
+        <div className="border p-4 rounded bg-gray-50">
+          <h3 className="font-bold mb-2">Additional Gallery Images (Optional)</h3>
+          <input type="file" multiple accept="image/*" onChange={(e) => setGeneralImages(e.target.files)} className="w-full" />
+        </div>
+
         <div className="flex items-center gap-2">
           <input type="checkbox" name="isSeasonal" id="isSeasonal" onChange={handleInputChange} />
           <label htmlFor="isSeasonal">Mark as Seasonal</label>
         </div>
+        
+        {formData.isSeasonal && (
+          <input type="text" name="seasonalTag" placeholder="Seasonal Tag (e.g., Winter Essentials)" onChange={handleInputChange} className="w-full p-2 border rounded" />
+        )}
 
-      {formData.isSeasonal && (
-        <input 
-              type="text" 
-              name="seasonalTag" 
-              placeholder="Seasonal Tag (e.g., Winter Essentials)" 
-              onChange={handleInputChange} 
-              className="w-full p-2 border rounded" 
-            />
-      )}
-
-        <input type="file" multiple accept="image/*" onChange={handleFileChange} className="w-full" required />
-
-        <button 
-          type="submit" 
-          disabled={uploading}
-          className="w-full bg-black text-white p-3 rounded font-semibold disabled:bg-gray-400"
-        >
+        <button type="submit" disabled={uploading} className="w-full bg-black text-white p-3 rounded font-semibold disabled:bg-gray-400">
           {uploading ? 'Uploading...' : 'Create Product'}
         </button>
       </form>

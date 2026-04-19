@@ -102,7 +102,7 @@ function Home(){
               <h3 className='font-semibold text-gray-900 truncate'>{product.title}</h3>
               <p className='text-sm text-gray-500 capitalize'>{product.category}</p>
               <div className='flex gap-3 mt-1 items-center'>
-                <span className='font-bold text-lg'>${product.price}</span>
+                <span className='font-bold text-lg'>₹{product.price}</span>
               </div>
             </Link>
           ))

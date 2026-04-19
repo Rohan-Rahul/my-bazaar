@@ -157,7 +157,7 @@ function CartDrawer() {
                           </button>
                         </div>
                         <p className='font-semibold'>
-                          ${item.product?.price || 0}
+                          ₹{item.product?.price || 0}
                         </p>
                       </div>
                     </div>
@@ -172,7 +172,7 @@ function CartDrawer() {
               <div className='flex justify-between items-center mb-6'>
                 <span className='font-semibold text-gray-600'>Subtotal</span>
                 <span className='text-xl font-bold'>
-                  ${subtotal.toFixed(2)}
+                  ₹{subtotal.toFixed(2)}
                 </span>
               </div>
               <button

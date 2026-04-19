@@ -9,6 +9,8 @@ function ProductDetails(){
   const [product,setProduct] = useState(null);
   const [loading,setLoading] = useState(true);
   const [selectedOption,setSelectedOption] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
+  const [activeImage,setActiveImage] = useState(0);
 
   const {fetchCart,setIsCartOpen} = useCart();
 
@@ -19,6 +21,9 @@ function ProductDetails(){
         setProduct(response.data);
         if(response.data.variantOptions?.length>0){
           setSelectedOption(response.data.variantOptions[0]);
+        }
+        if(response.data.colors?.length>0){
+          setSelectedColor(response.data.colors[0]);
         }
         setLoading(false);
       } catch (error){
@@ -31,7 +36,7 @@ function ProductDetails(){
 
   const handleAddToCart = async () => {
     try{
-      await cartService.addToCart(product._id,1 ,selectedOption);
+      await cartService.addToCart(product._id,1 ,selectedOption, selectedColor);
       fetchCart();
       setIsCartOpen(true);
     } catch (error){
@@ -51,21 +56,39 @@ function ProductDetails(){
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-10'>
         <div className='flex flex-col gap-4'>
+          {/* UPDATED: Main Image using activeImage state */}
           <div className='bg-gray-100 rounded-2xl h-96 w-full flex items-center justify-center overflow-hidden'>
-            {product.images?.[0] ? (
-              <img src={product.images[0]} alt={product.title} className='object-cover h-full w-full' />
+            {product.images?.length > 0 ? (
+              <img src={product.images[activeImage]} alt={product.title} className='object-contain h-full w-full' />
             ) : (
               <span className='text-gray-400'>No Image Available</span>
             )}
           </div>
+          
+          {/* Thumbnail Gallery */}
+          {product.images?.length > 1 && (
+            <div className='flex gap-4 overflow-x-auto py-2'>
+              {product.images.map((img, index) => (
+                <img 
+                  key={index}
+                  src={img}
+                  alt={`Thumbnail ${index + 1}`}
+                  onClick={() => setActiveImage(index)}
+                  className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition-all ${
+                    activeImage === index ? 'border-black' : 'border-transparent'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className='flex flex-col'>
           <span className='text-xs font-bold uppercase tracking-wider text-gray-500 mb-2'>{product.category}</span>
           <h1 className='text-3xl font-bold mb-4'>{product.title}</h1>
-          <p className='text-2xl font-semibold mb-6'>${product.price}</p>
+          <p className='text-2xl font-semibold mb-6'>₹{product.price}</p>
 
-          {/* DYNAMIC SELECTOR SECTION */}
+          {/* DYNAMIC SELECTOR SECTION (Sizes) */}
           {product.variantOptions?.length > 0 && (
             <div className='mb-6'>
               <h3 className='text-sm font-medium mb-3'>Select {product.variantType}</h3>
@@ -79,6 +102,32 @@ function ProductDetails(){
                     }`}
                   >
                     {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Color Selector Section */}
+          {product.colors?.length > 0 && (
+            <div className='mb-6'>
+              <h3 className='text-sm font-medium mb-3'>Select Color</h3>
+              <div className='flex flex-wrap gap-3'>
+                {product.colors.map((color) => (
+                  <button 
+                    key={color} 
+                    onClick={() => {setSelectedColor(color);
+                      const matchedVariant = product.colorImages?.find(c => c.color === color);
+                      if(matchedVariant){
+                        const index = product.images.indexOf(matchedVariant.url);
+                        if(index !== -1) setActiveImage(index);
+                      }
+                    }}
+                    className={`px-4 py-2 min-w-[3rem] rounded-full border transition-colors ${
+                      selectedColor === color ? 'text-white bg-black border-black' : 'bg-white text-black border-gray-300 hover:border-black'
+                    }`}
+                  >
+                    {color}
                   </button>
                 ))}
               </div>

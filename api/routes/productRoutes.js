@@ -51,10 +51,32 @@ router.get('/:id', async (req, res) => {
 });
 
 // create a new product (admin only)
-router.post('/', verifyAdmin,upload.array('images',5), async (req, res) => {
+router.post('/', verifyAdmin,upload.fields([
+  {name: 'generalImages', maxCount: 5},
+  {name: 'colorFiles', maxCount:5}
+]), async (req, res) => {
   try {
-    //extract cloudinary url from uploaded files
-    const imageUrls = req.files.map(file => file.path);
+    
+    //extract generalImages
+    const generalImagesUrls = (req.files && req.files['generalImages']) ? req.files['generalImages'].map(file => file.path) : [];
+
+    //extract color specific images and names
+    const colorFiles = (req.files && req.files['colorFiles']) || [];
+    let colorNames = req.body.colorNames || [];
+
+    if(!Array.isArray(colorNames)){
+      colorNames = [colorNames];
+    }
+
+    //map files to their respective colors
+    const colorImages = colorFiles.map((file,index) => ({
+      color: colorNames[index] ? colorNames[index].trim() : 'Default',
+      url: file.path
+    }));
+
+    //combine all URLs for main gallery
+    const allImages = [...generalImagesUrls, ...colorImages.map(c => c.url)];
+    const colorsArray = colorImages.map(c => c.color);
 
     //format variantOptions from string "S,M,L" to array ["S","M","L"]
     let parsedVariantOptions = [];
@@ -67,8 +89,10 @@ router.post('/', verifyAdmin,upload.array('images',5), async (req, res) => {
     const newProduct = new Product({
       ...req.body,
       variantOptions: parsedVariantOptions,
+      colors: colorsArray,
+      colorImages: colorImages,
       isSeasonal: isSeasonalBool,
-      images: imageUrls
+      images: allImages
     });
     
     const savedProduct = await newProduct.save();

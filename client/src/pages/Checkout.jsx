@@ -67,7 +67,8 @@ function Checkout() {
                   title: item.product.title,
                   price: item.product.price,
                   quantity: item.quantity,
-                  selectedOption: item.selectedOption
+                  selectedOption: item.selectedOption,
+                  selectedColor: item.selectedColor,
                 })),
                 shippingAddress: address,
                 totalPrice: subtotal

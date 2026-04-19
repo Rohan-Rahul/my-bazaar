@@ -15,7 +15,8 @@ const orderSchema = new mongoose.Schema({
     title: String,
     price: Number,
     quantity: Number,
-    selectedOption: String 
+    selectedOption: String ,
+    selectedColor: String
   }],
   shippingAddress: {
     address: { type: String, required: true },
