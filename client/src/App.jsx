@@ -8,6 +8,7 @@ import ProductDetails from "./pages/ProductDetails";
 import Checkout from './pages/Checkout';
 import Orders from './pages/Order';
 import ProductForm from './pages/admin/ProductForm';
+import Wishlist from './pages/Wishlist';
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -49,6 +50,13 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }/>
+            <Route 
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <Wishlist />
               </ProtectedRoute>
             }/>
 

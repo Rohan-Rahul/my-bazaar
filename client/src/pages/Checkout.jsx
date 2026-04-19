@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -13,15 +13,39 @@ function Checkout() {
     address: "",
     city: "",
     postalCode: "",
-    country: "",
+    country: "India",
   });
-  
+  const [savedAddresses, setSavedAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const subtotal = cartItems.reduce(
     (acc, item) => acc + item.product.price * item.quantity,
     0
   );
+
+  // Fetch saved addresses on component mount
+  useEffect(() => {
+    const fetchSavedAddresses = async () => {
+      try {
+        const { data } = await api.get('/users/profile');
+        setSavedAddresses(data.addresses || []);
+        
+        // Auto-select the default address if one exists
+        const defaultAddr = data.addresses?.find(a => a.isDefault);
+        if (defaultAddr) {
+          setAddress({
+            address: defaultAddr.address,
+            city: defaultAddr.city,
+            postalCode: defaultAddr.postalCode,
+            country: defaultAddr.country
+          });
+        }
+      } catch (error) {
+        console.error("Error loading saved addresses:", error);
+      }
+    };
+    fetchSavedAddresses();
+  }, []);
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -106,6 +130,32 @@ function Checkout() {
     <div className='max-w-4xl mx-auto p-8 grid grid-cols-1 md:grid-cols-2 gap-12'>
       <div>
         <h2 className='text-2xl font-bold mb-6'>Shipping Details</h2>
+
+        {/* Saved Addresses Section */}
+        {savedAddresses.length > 0 && (
+          <div className="mb-8">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3">Quick Select Address</p>
+            <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+              {savedAddresses.map((addr) => (
+                <button 
+                  key={addr._id}
+                  type="button"
+                  onClick={() => setAddress({
+                    address: addr.address,
+                    city: addr.city,
+                    postalCode: addr.postalCode,
+                    country: addr.country
+                  })}
+                  className="flex-shrink-0 text-left p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-black transition-all max-w-[180px]"
+                >
+                  <p className="text-sm font-bold truncate">{addr.address}</p>
+                  <p className="text-[10px] text-gray-500">{addr.city}, {addr.postalCode}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handlePayment} className='space-y-4'>
           <input
             className='w-full p-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-black'
@@ -143,26 +193,26 @@ function Checkout() {
             disabled={loading || cartItems.length === 0}
             className='w-full bg-black text-white py-4 rounded-full font-bold mt-4 disabled:bg-gray-400'
           >
-            {loading ? "Processing..." : `Confirm & Pay ₹${subtotal}`}
+            {loading ? "Processing..." : `Confirm & Pay ₹${subtotal.toFixed(2)}`}
           </button>
         </form>
       </div>
 
-      <div className='bg-gray-50 p-8 rounded-[2rem] h-fit'>
+      <div className='bg-gray-50 p-8 rounded-[2rem] h-fit border border-gray-100'>
         <h2 className='text-xl font-bold mb-6'>Order Summary</h2>
         <div className='space-y-4'>
           {cartItems.map((item, idx) => (
             <div key={idx} className='flex justify-between text-sm'>
               <span className="flex flex-col">
-                <span>{item.product.title} (x{item.quantity})</span>
-                {item.selectedColor && <span className="text-gray-500 text-xs">Color: {item.selectedColor}</span>}
-                {item.selectedOption && <span className="text-gray-500 text-xs">Size: {item.selectedOption}</span>}
+                <span className="font-medium">{item.product.title} (x{item.quantity})</span>
+                {item.selectedColor && <span className="text-gray-400 text-xs">Color: {item.selectedColor}</span>}
+                {item.selectedOption && <span className="text-gray-400 text-xs">Size: {item.selectedOption}</span>}
               </span>
-              <span>₹{(item.product.price * item.quantity).toFixed(2)}</span>
+              <span className="font-mono">₹{(item.product.price * item.quantity).toFixed(2)}</span>
             </div>
           ))}
           <hr className='border-gray-200' />
-          <div className='flex justify-between font-bold text-lg'>
+          <div className='flex justify-between font-bold text-lg pt-2'>
             <span>Total</span>
             <span>₹{subtotal.toFixed(2)}</span>
           </div>

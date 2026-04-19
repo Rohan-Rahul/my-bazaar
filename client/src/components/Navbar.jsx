@@ -1,36 +1,40 @@
-import {Link, useNavigate, useLocation} from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { useCart } from '../context/CartContext';
-import {useAuth} from '../context/AuthContext';
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
-function Navbar(){
-  const {cartItems,setIsCartOpen} = useCart();
-  const {isAuthenticated,logout,user} = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
+function Navbar() {
+  const { cartItems, setIsCartOpen } = useCart();
+  const { isAuthenticated, logout, user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
 
   //calculate total quantity of items in cart
-  const totalItems = cartItems.reduce((acc,item)=> acc + item.quantity, 0);
+  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
-  useEffect(()=>{
-    // Guard: Prevents the effect from running on initial mount if search is empty
-    if(searchTerm === '' && location.search === '') return;
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const currentSearch = params.get('search') || '';
 
-    const delayDebounceFn = setTimeout(()=>{
-      const query = searchTerm.trim();
-      
-      if(query){
-        // FIX: The '?' must come AFTER the slash to define query parameters
-        navigate(`/?search=${encodeURIComponent(query)}`);
-      } else if(searchTerm === '' && location.pathname === '/'){
-        // Returns to base home page if search is cleared
-        navigate('/');
+    // Guard: only run if the input actually differs from the URL state
+    if (searchTerm === currentSearch) return;
+
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm.trim()) {
+        params.set('search', searchTerm.trim());
+      } else {
+        params.delete('search');
       }
+      navigate({
+        pathname: '/',
+        search: params.toString()
+      }, {replace: true});
     }, 400);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, navigate, location.pathname, location.search]);
+  }, [searchTerm, navigate, location.pathname]);
+
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -64,7 +68,8 @@ function Navbar(){
         </button>
         {isAuthenticated ? (
           <div className='flex items-center gap-6'>
-            <span className='text-gray-400 hidden lg:block'>Hi, {user?.name?.split(' ')[0]}</span>
+            <Link to='/profile' className='hover:text-black transition-colors'>Profile</Link>
+            <Link to='/wishlist' className='hover:text-black transition-colors'>Wishlist</Link>
             <Link to='/orders' className='hover:text-black transition-colors'>Orders</Link>
             <button onClick={logout} className='text-black font-bold hover:opacity-70 transition-opacity'>Logout</button>
           </div>

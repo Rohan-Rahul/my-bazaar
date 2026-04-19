@@ -101,6 +101,57 @@ router.post('/login', async(req,res)=>{
   }
 });
 
+//add a new address
+router.post('/addresses', verifyToken, async(req,res)=>{
+  try{
+    const user = await User.findById(req.user.id);
+    if(!user) return res.status(404).json({
+      message: 'User not found'
+    });
+
+    const newAddress = {
+      ...req.body, 
+      isDefault: user.addresses.length === 0
+    };
+
+    await user.save();
+    res.status(201).json(user.addresses);
+  } catch(error){
+    res.status(500).json({
+      message: 'Error adding address'
+    });
+  }
+});
+
+//toggle wishlist
+router.post('/wishlist/toggle', verifyToken, async(req,res)=>{
+  try{
+    const user = await User.findById(req.user.id);
+    const productId = req.body.productId;
+
+    const index = user.wishlist.indexOf(productId);
+    if(index === -1){
+      user.wishlist.push(productId);
+      await user.save();
+      return res.status(200).json({
+        message: 'Added to wishlist',
+        isAdded: true
+      });
+    } else {
+      user.wishlist.splice(index,1);
+      await user.save();
+      return res.status(200).json({
+        message: 'Removed from wishlist',
+        isAdded: false
+      });
+    }
+  } catch(error){
+    res.status(500).json({
+      message: 'Error updating wishlist'
+    });
+  }
+});
+
 //Profile Route (required for AuthContext persistence on refresh)
 router.get('/profile', verifyToken, async(req,res)=>{
   try{
@@ -145,6 +196,18 @@ router.get('/profile', verifyToken, async(req,res)=>{
   }
 });
 
+//get all wishlists items for logged-in users
+router.get('/wishlist', verifyToken, async(req,res)=>{
+  try{
+    const user = await User.findById(req.user.id).populate('wishlist');
+    res.status(200).json(user.wishlist);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching wishlist'
+    });
+  }
+});
+
 //update user profile
 router.put('/profile', verifyToken,async(req,res)=>{
   try{
@@ -176,6 +239,23 @@ router.put('/profile', verifyToken,async(req,res)=>{
     res.status(500).json({
       message: 'Error updating profile',
       error: error.message
+    });
+  }
+});
+
+//delete an address
+router.delete('/addresses/:addressId', verifyToken, async(req,res)=>{
+  try{
+    const user = await User.findById(req.user.id);
+    user.addresses = user.addresses.filter(
+      (addr) = addr._id.toString() !== req.params.addressId
+    );
+
+    await user.save();
+    res.json(user.addresses);
+  } catch (error){
+    res.status(500).json({
+      message: 'Error deleting address'
     });
   }
 });
