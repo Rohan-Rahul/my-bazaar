@@ -6,19 +6,21 @@ import api from "../services/api";
 
 function Checkout() {
   const { cartItems, fetchCart } = useCart();
-  const {user} = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  
   const [address, setAddress] = useState({
     address: "",
     city: "",
     postalCode: "",
     country: "",
   });
-  const [loading,setLoading] = useState(false);
+  
+  const [loading, setLoading] = useState(false);
 
   const subtotal = cartItems.reduce(
     (acc, item) => acc + item.product.price * item.quantity,
-    0,
+    0
   );
 
   const loadRazorpay = () => {
@@ -42,8 +44,7 @@ function Checkout() {
       return;
     }
 
-    try{
-      //create order on backend
+    try {
       const { data: order } = await api.post('/orders/razorpay-order', {
         amount: subtotal
       });
@@ -56,7 +57,7 @@ function Checkout() {
         description: 'Order Payment',
         order_id: order.id,
         handler: async(response)=>{
-          try{
+          try {
             const verificationData = {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -68,13 +69,13 @@ function Checkout() {
                   price: item.product.price,
                   quantity: item.quantity,
                   selectedOption: item.selectedOption,
-                  selectedColor: item.selectedColor,
+                  selectedColor: item.selectedColor
                 })),
                 shippingAddress: address,
-                totalPrice: subtotal
+                totalPrice: subtotal,
+                userEmail: user?.email 
               }
             };
-
 
             await api.post('/orders/verify', verificationData);
             fetchCart();
@@ -105,11 +106,11 @@ function Checkout() {
     <div className='max-w-4xl mx-auto p-8 grid grid-cols-1 md:grid-cols-2 gap-12'>
       <div>
         <h2 className='text-2xl font-bold mb-6'>Shipping Details</h2>
-        {/* onSubmit is now changed to handlePayment */}
         <form onSubmit={handlePayment} className='space-y-4'>
           <input
             className='w-full p-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-black'
-            placeholder='Address'
+            placeholder='Full Street Address'
+            value={address.address}
             onChange={(e) => setAddress({ ...address, address: e.target.value })}
             required
           />
@@ -117,12 +118,14 @@ function Checkout() {
             <input
               className='w-full p-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-black'
               placeholder='City'
+              value={address.city}
               onChange={(e) => setAddress({ ...address, city: e.target.value })}
               required
             />
             <input
               className='w-full p-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-black'
               placeholder='Postal Code'
+              value={address.postalCode}
               onChange={(e) => setAddress({ ...address, postalCode: e.target.value })}
               required
             />
@@ -130,12 +133,14 @@ function Checkout() {
           <input
             className='w-full p-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-black'
             placeholder='Country'
+            value={address.country}
             onChange={(e) => setAddress({ ...address, country: e.target.value })}
             required
           />
+
           <button
             type='submit'
-            disabled={loading}
+            disabled={loading || cartItems.length === 0}
             className='w-full bg-black text-white py-4 rounded-full font-bold mt-4 disabled:bg-gray-400'
           >
             {loading ? "Processing..." : `Confirm & Pay ₹${subtotal}`}
@@ -148,8 +153,10 @@ function Checkout() {
         <div className='space-y-4'>
           {cartItems.map((item, idx) => (
             <div key={idx} className='flex justify-between text-sm'>
-              <span>
-                {item.product.title} (x{item.quantity})
+              <span className="flex flex-col">
+                <span>{item.product.title} (x{item.quantity})</span>
+                {item.selectedColor && <span className="text-gray-500 text-xs">Color: {item.selectedColor}</span>}
+                {item.selectedOption && <span className="text-gray-500 text-xs">Size: {item.selectedOption}</span>}
               </span>
               <span>₹{(item.product.price * item.quantity).toFixed(2)}</span>
             </div>

@@ -19,6 +19,25 @@ function Orders() {
     fetchOrders();
   }, []);
 
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      const response = await api.get(`/orders/${orderId}/invoice`, {
+        responseType: 'blob' // Required to handle PDF file streams
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice_${orderId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      alert('Failed to download invoice. Please try again later.');
+    }
+  };
+
   if (loading)
     return <div className='p-10 text-center'>Loading your orders...</div>;
 
@@ -73,13 +92,21 @@ function Orders() {
                 ))}
               </div>
 
-              <div className='flex justify-between items-center'>
+              <div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
                 <p className='text-gray-500 text-sm'>
                   {new Date(order.createdAt).toLocaleDateString()}
                 </p>
-                <p className='text-lg font-bold'>
-                  Total: ₹{order.totalPrice.toFixed(2)}
-                </p>
+                <div className='flex items-center gap-6'>
+                  <p className='text-lg font-bold'>
+                    Total: ₹{order.totalPrice.toFixed(2)}
+                  </p>
+                  <button
+                    onClick={() => handleDownloadInvoice(order._id)}
+                    className='bg-black text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-gray-800 transition-colors'
+                  >
+                    Download Invoice
+                  </button>
+                </div>
               </div>
             </div>
           ))}
