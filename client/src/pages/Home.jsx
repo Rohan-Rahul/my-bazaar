@@ -1,25 +1,21 @@
-import {useState, useEffect} from 'react';
-import {Link, useSearchParams} from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 
-function Home(){
+function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  //extract url params
   const [searchParams, setSearchParams] = useSearchParams();
 
-  //guard against 'undefined' showing up in the queries
   const rawSearch = searchParams.get('search');
   const searchQuery = (rawSearch === 'undefined' || !rawSearch) ? '' : rawSearch;
   const categoryQuery = searchParams.get('category') || '';
 
-  //define categories for the filter
   const categories = ['All', 'Electronics', 'Clothing', 'Jewelry', 'Toys'];
 
   const handleCategoryChange = (category) => {
     const params = new URLSearchParams(searchParams);
-    if(category === 'All'){
+    if (category === 'All') {
       params.delete('category');
     } else {
       params.set('category', category);
@@ -27,17 +23,17 @@ function Home(){
     setSearchParams(params);
   };
 
-  useEffect (()=>{
+  useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      try{
+      try {
         const params = {};
-        if(searchQuery) params.search = searchQuery;
-        if(categoryQuery && categoryQuery !== 'All') params.category = categoryQuery;
+        if (searchQuery) params.search = searchQuery;
+        if (categoryQuery && categoryQuery !== 'All') params.category = categoryQuery;
 
-        const response = await api.get('/products', {params});
+        const response = await api.get('/products', { params });
         setProducts(response.data);
-      } catch (error){
+      } catch (error) {
         console.error('Error fetching products: ', error);
       } finally {
         setLoading(false);
@@ -48,24 +44,23 @@ function Home(){
     return () => clearTimeout(fastTimer);
   }, [searchQuery, categoryQuery]);
 
-    
   return (
-    <div className='max-w-7xl mx-auto p-6'>
-      {/* Search Result Heading */}
-      <h2 className='text-3xl font-bold mb-10 text-center tracking-tight'>
+    <div className='max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-6'>
+      {/* Responsive Search Result Heading */}
+      <h2 className='text-2xl md:text-3xl font-bold mb-6 md:mb-10 text-center tracking-tight'>
         {searchQuery ? `Results for "${searchQuery}"` : 'Recommended for You'}
       </h2>
 
-      {/* Category Filter */}
-      <div className='flex flex-wrap justify-center gap-4 mb-10'>
+      {/* Category Filter - Scrollable on Mobile */}
+      <div className='flex flex-nowrap md:flex-wrap overflow-x-auto md:justify-center gap-3 mb-8 md:mb-10 no-scrollbar pb-2 md:pb-0'>
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => handleCategoryChange(category)}
-            className={`px-6 py-2 rounded-full border transition-all text-sm font-medium ${
+            className={`px-5 py-2 rounded-full border transition-all text-xs md:text-sm font-bold whitespace-nowrap ${
               (categoryQuery === category) || (!categoryQuery && category === 'All')
                 ? 'bg-black text-white border-black shadow-md'
-                : 'bg-white text-black border-gray-300 hover:border-black'
+                : 'bg-white text-black border-gray-200 hover:border-black'
             }`}
           >
             {category}
@@ -73,8 +68,8 @@ function Home(){
         ))}
       </div>
 
-      {/* Product Grid */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8'>
+      {/* Product Grid - 2 columns on mobile, 4 on desktop */}
+      <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8'>
         {loading && products.length === 0 ? (
           <div className="col-span-full text-center py-20 text-gray-400 font-medium">
             Searching My Bazaar...
@@ -98,7 +93,8 @@ function Home(){
               key={product._id} 
               className='group cursor-pointer'
             >
-              <div className='bg-gray-100 rounded-2xl h-72 w-full mb-4 flex items-center justify-center overflow-hidden shadow-sm border border-gray-50'>
+              {/* Responsive Image Height */}
+              <div className='bg-gray-50 rounded-2xl h-48 md:h-72 w-full mb-3 flex items-center justify-center overflow-hidden border border-gray-100'>
                 {product.images && product.images.length > 0 ? (
                   <img 
                     src={product.images[0]} 
@@ -106,19 +102,22 @@ function Home(){
                     className='object-cover h-full w-full group-hover:scale-105 transition-transform duration-500' 
                   />
                 ) : (
-                  <span className='text-gray-400 font-mono text-xs'>NO IMAGE</span>
+                  <span className='text-gray-400 font-mono text-[10px]'>NO IMAGE</span>
                 )}
               </div>
-              <h3 className='font-bold text-gray-900 truncate tracking-tight'>
+              
+              <h3 className='font-bold text-gray-900 truncate tracking-tight text-sm md:text-base'>
                 {product.title}
               </h3>
-              <p className='text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1'>
+              
+              <p className='text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1'>
                 {product.category}
               </p>
+              
               <div className="flex justify-between items-center">
-                <p className='font-bold text-lg'>₹{product.price.toFixed(2)}</p>
+                <p className='font-black text-base md:text-lg'>₹{product.price.toFixed(0)}</p>
                 {product.stock <= 5 && product.stock > 0 && (
-                  <span className="text-[10px] text-red-600 font-bold uppercase">Low Stock</span>
+                  <span className="text-[8px] md:text-[10px] text-red-600 font-black uppercase tracking-tighter">Low Stock</span>
                 )}
               </div>
             </Link>

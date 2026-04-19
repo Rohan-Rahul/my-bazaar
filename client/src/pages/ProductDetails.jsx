@@ -18,7 +18,6 @@ function ProductDetails() {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [togglingWishlist, setTogglingWishlist] = useState(false);
 
-  // Review states
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -83,7 +82,7 @@ function ProductDetails() {
       toast.success('Review submitted successfully');
       setComment('');
       setRating(5);
-      fetchProductData(); // Refresh product to show new review and updated rating
+      fetchProductData(); 
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to submit review');
     } finally {
@@ -95,16 +94,15 @@ function ProductDetails() {
   if (!product) return <div className='p-10 text-center'>Product not found</div>;
 
   return (
-    <div className='max-w-6xl mx-auto p-6 text-gray-800'>
-      <div className='text-sm mb-6 text-gray-400'>
+    <div className='max-w-6xl mx-auto p-4 md:p-6 text-gray-800 pb-28 md:pb-12'>
+      <div className='hidden md:flex text-sm mb-6 text-gray-400'>
         <Link to='/' className='hover:text-black transition-colors'>Home</Link> &nbsp; &gt; &nbsp; 
         <span className='text-gray-800 font-medium'>{product.category}</span>
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-12 mb-20'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-12 md:mb-20'>
         <div className='flex flex-col gap-4'>
-          {/* Main Image */}
-          <div className='bg-gray-50 rounded-3xl h-[500px] w-full flex items-center justify-center overflow-hidden border border-gray-100'>
+          <div className='bg-gray-50 rounded-2xl md:rounded-3xl h-[350px] md:h-[500px] w-full flex items-center justify-center overflow-hidden border border-gray-100'>
             {product.images?.length > 0 ? (
               <img src={product.images[activeImage]} alt={product.title} className='object-contain h-full w-full' />
             ) : (
@@ -112,7 +110,6 @@ function ProductDetails() {
             )}
           </div>
           
-          {/* Thumbnail Gallery */}
           {product.images?.length > 1 && (
             <div className='flex gap-3 overflow-x-auto py-2 no-scrollbar'>
               {product.images.map((img, index) => (
@@ -121,7 +118,7 @@ function ProductDetails() {
                   src={img}
                   alt=""
                   onClick={() => setActiveImage(index)}
-                  className={`w-20 h-20 object-cover rounded-xl cursor-pointer border-2 transition-all shrink-0 ${
+                  className={`w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl cursor-pointer border-2 transition-all shrink-0 ${
                     activeImage === index ? 'border-black' : 'border-transparent opacity-60'
                   }`}
                 />
@@ -137,24 +134,23 @@ function ProductDetails() {
             </span>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold">★ {product.rating?.toFixed(1) || '0.0'}</span>
-              <span className="text-xs text-gray-400">({product.numReviews} reviews)</span>
+              <span className="text-xs text-gray-400">({product.numReviews})</span>
             </div>
           </div>
           
-          <h1 className='text-4xl font-bold mb-4 tracking-tighter'>{product.title}</h1>
-          <p className='text-3xl font-black mb-8'>₹{product.price.toLocaleString('en-IN')}</p>
+          <h1 className='text-2xl md:text-4xl font-bold mb-3 md:mb-4 tracking-tighter leading-tight'>{product.title}</h1>
+          <p className='text-2xl md:text-3xl font-black mb-6 md:mb-8'>₹{product.price.toLocaleString('en-IN')}</p>
 
-          {/* Variant Selector */}
           {product.variantOptions?.length > 0 && (
-            <div className='mb-8'>
-              <h3 className='text-xs font-bold uppercase tracking-widest text-gray-400 mb-4'>Select {product.variantType}</h3>
-              <div className='flex flex-wrap gap-3'>
+            <div className='mb-6 md:mb-8'>
+              <h3 className='text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3'>Select {product.variantType}</h3>
+              <div className='flex flex-wrap gap-2'>
                 {product.variantOptions.map((option) => (
                   <button 
                     key={option} 
                     onClick={() => setSelectedOption(option)}
-                    className={`px-6 py-2 rounded-full border text-sm font-bold transition-all ${
-                      selectedOption === option ? 'bg-black text-white border-black shadow-md' : 'bg-white text-black border-gray-200 hover:border-black'
+                    className={`px-5 py-2 rounded-full border text-xs md:text-sm font-bold transition-all ${
+                      selectedOption === option ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200'
                     }`}
                   >
                     {option}
@@ -164,11 +160,10 @@ function ProductDetails() {
             </div>
           )}
 
-          {/* Color Selector */}
           {product.colors?.length > 0 && (
-            <div className='mb-10'>
-              <h3 className='text-xs font-bold uppercase tracking-widest text-gray-400 mb-4'>Select Color</h3>
-              <div className='flex flex-wrap gap-3'>
+            <div className='mb-8 md:mb-10'>
+              <h3 className='text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3'>Select Color</h3>
+              <div className='flex flex-wrap gap-2'>
                 {product.colors.map((color) => (
                   <button 
                     key={color} 
@@ -180,8 +175,8 @@ function ProductDetails() {
                         if(index !== -1) setActiveImage(index);
                       }
                     }}
-                    className={`px-6 py-2 rounded-full border text-sm font-bold transition-all ${
-                      selectedColor === color ? 'bg-black text-white border-black shadow-md' : 'bg-white text-black border-gray-200 hover:border-black'
+                    className={`px-5 py-2 rounded-full border text-xs md:text-sm font-bold transition-all ${
+                      selectedColor === color ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200'
                     }`}
                   >
                     {color}
@@ -191,18 +186,18 @@ function ProductDetails() {
             </div>
           )}
 
-          <div className='flex gap-4'>
+          <div className='flex gap-3'>
             <button 
               onClick={handleAddToCart}
-              className='flex-1 bg-black text-white py-5 rounded-2xl font-bold hover:bg-gray-800 transition-all text-lg shadow-xl shadow-black/10'
+              className='flex-1 bg-black text-white py-4 md:py-5 rounded-2xl font-bold hover:bg-gray-800 transition-all text-sm md:text-lg shadow-xl shadow-black/10'
             >
               Add to Cart
             </button>
             <button 
               onClick={handleToggleWishlist}
               disabled={togglingWishlist}
-              className={`px-6 rounded-2xl border-2 transition-all flex items-center justify-center ${
-                isInWishlist ? 'bg-red-50 border-red-500 text-red-500' : 'bg-white border-gray-100 text-gray-400 hover:border-black hover:text-black'
+              className={`px-5 md:px-6 rounded-2xl border-2 transition-all flex items-center justify-center ${
+                isInWishlist ? 'bg-red-50 border-red-500 text-red-500' : 'bg-white border-gray-100 text-gray-400'
               }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill={isInWishlist ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
@@ -211,27 +206,26 @@ function ProductDetails() {
             </button>
           </div>
 
-          <div className='mt-12 pt-8 border-t border-gray-100'>
-            <h3 className='text-xs font-bold uppercase tracking-widest text-gray-400 mb-4'>Details</h3>
+          <div className='mt-10 md:mt-12 pt-8 border-t border-gray-100'>
+            <h3 className='text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4'>Details</h3>
             <p className='text-gray-600 text-sm leading-relaxed whitespace-pre-line'>{product.description}</p>
           </div>
         </div>
       </div>
 
-      {/* REVIEWS SECTION */}
-      <div className="max-w-4xl border-t border-gray-100 pt-16">
-        <h2 className="text-3xl font-bold mb-10 tracking-tighter">Customer Reviews</h2>
+      <div className="max-w-4xl border-t border-gray-100 pt-12 md:pt-16">
+        <h2 className="text-2xl md:text-3xl font-bold mb-8 md:mb-10 tracking-tighter">Customer Reviews</h2>
 
         {isAuthenticated ? (
-          <form onSubmit={handleReviewSubmit} className="mb-16 bg-gray-50 p-8 rounded-[2rem] border border-gray-100">
-            <h3 className="font-bold mb-6">Share your experience</h3>
-            <div className="flex gap-3 mb-6">
+          <form onSubmit={handleReviewSubmit} className="mb-12 md:mb-16 bg-gray-50 p-6 md:p-8 rounded-[2rem] border border-gray-100">
+            <h3 className="font-bold mb-6 text-sm md:text-base">Share your experience</h3>
+            <div className="flex gap-2 mb-6">
               {[1, 2, 3, 4, 5].map((num) => (
                 <button
                   key={num}
                   type="button"
                   onClick={() => setRating(num)}
-                  className={`w-12 h-12 rounded-2xl font-bold transition-all ${
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl font-bold transition-all ${
                     rating >= num ? 'bg-black text-white shadow-lg' : 'bg-white text-gray-300 border border-gray-100'
                   }`}
                 >
@@ -240,7 +234,7 @@ function ProductDetails() {
               ))}
             </div>
             <textarea
-              className="w-full p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-black mb-6 min-h-[120px] text-sm"
+              className="w-full p-4 md:p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-black mb-6 min-h-[100px] md:min-h-[120px] text-sm"
               placeholder="What did you think of the quality and fit?"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -249,32 +243,32 @@ function ProductDetails() {
             <button 
               type="submit" 
               disabled={submittingReview}
-              className="bg-black text-white px-10 py-4 rounded-xl font-bold hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+              className="w-full md:w-auto bg-black text-white px-10 py-4 rounded-xl font-bold hover:bg-gray-800 transition-colors disabled:bg-gray-400 text-sm"
             >
               {submittingReview ? 'Posting...' : 'Post Review'}
             </button>
           </form>
         ) : (
-          <div className="mb-16 p-8 bg-gray-50 rounded-[2rem] text-center border border-dashed border-gray-200">
-            <p className="text-gray-500 text-sm italic">Please login to share your thoughts with the community.</p>
+          <div className="mb-12 p-8 bg-gray-50 rounded-[2rem] text-center border border-dashed border-gray-200">
+            <p className="text-gray-500 text-xs md:text-sm italic">Please login to share your thoughts.</p>
           </div>
         )}
 
-        <div className="space-y-10">
+        <div className="space-y-8 md:space-y-10">
           {product.reviews?.length === 0 ? (
-            <p className="text-gray-400 italic py-10">No reviews yet. Be the first to share your feedback!</p>
+            <p className="text-gray-400 italic py-6 text-sm">No reviews yet.</p>
           ) : (
             product.reviews.map((rev) => (
-              <div key={rev._id} className="group">
-                <div className="flex justify-between items-start mb-3">
+              <div key={rev._id}>
+                <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="font-bold text-lg tracking-tight">{rev.name}</p>
-                    <div className="flex text-black text-xs mt-1">
+                    <p className="font-bold text-base tracking-tight">{rev.name}</p>
+                    <div className="flex text-black text-[10px] mt-1">
                       {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
                     </div>
                   </div>
-                  <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                    {new Date(rev.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                  <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">
+                    {new Date(rev.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 <p className="text-gray-600 text-sm leading-relaxed max-w-2xl">{rev.comment}</p>
