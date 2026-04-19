@@ -1,15 +1,17 @@
 import {useState, useEffect} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 
 function Home(){
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-
   //extract url params
   const [searchParams, setSearchParams] = useSearchParams();
-  const searchQuery = searchParams.get('search') || '';
+
+  //guard against 'undefined' showing up in the queries
+  const rawSearch = searchParams.get('search');
+  const searchQuery = (rawSearch === 'undefined' || !rawSearch) ? '' : rawSearch;
   const categoryQuery = searchParams.get('category') || '';
 
   //define categories for the filter
@@ -26,35 +28,32 @@ function Home(){
   };
 
   useEffect (()=>{
-    //implementing debouncing to prevent excessive api calls
-    const delayDebounceFn = setTimeout(async ()=>{
+    const fetchProducts = async () => {
       setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if(searchQuery) params.append('search', searchQuery);
-        if(categoryQuery && categoryQuery !== 'All') params.append('category', categoryQuery);
+      try{
+        const params = {};
+        if(searchQuery) params.search = searchQuery;
+        if(categoryQuery && categoryQuery !== 'All') params.category = categoryQuery;
 
-        const queryString = params.toString() ? `?${params.toString()}` : '';
-        const response = await axios.get(`http://localhost:3000/api/products${queryString}`);
-
+        const response = await api.get('/products', {params});
         setProducts(response.data);
       } catch (error){
         console.error('Error fetching products: ', error);
       } finally {
         setLoading(false);
       }
-    }, 500); //wait for 500 ms
+    };
 
-    //cleanup function to clear timeout
-    return () => clearTimeout(delayDebounceFn);
+    const fastTimer = setTimeout(fetchProducts, 150);
+    return () => clearTimeout(fastTimer);
   }, [searchQuery, categoryQuery]);
 
-  if(loading && products?.length ===0) return <div className='p-10 text-center'>Loading products...</div>;
     
   return (
     <div className='max-w-7xl mx-auto p-6'>
-      <h2 className='text-3xl font-bold mb-6 text-center'>
-        {searchQuery ? `Search results for "${searchQuery}"` : 'You might also like'}
+      {/* Search Result Heading */}
+      <h2 className='text-3xl font-bold mb-10 text-center tracking-tight'>
+        {searchQuery ? `Results for "${searchQuery}"` : 'Recommended for You'}
       </h2>
 
       {/* Category Filter */}
@@ -63,9 +62,9 @@ function Home(){
           <button
             key={category}
             onClick={() => handleCategoryChange(category)}
-            className={`px-6 py-2 rounded-full border transition-colors ${
+            className={`px-6 py-2 rounded-full border transition-all text-sm font-medium ${
               (categoryQuery === category) || (!categoryQuery && category === 'All')
-                ? 'bg-black text-white border-black'
+                ? 'bg-black text-white border-black shadow-md'
                 : 'bg-white text-black border-gray-300 hover:border-black'
             }`}
           >
@@ -76,33 +75,51 @@ function Home(){
 
       {/* Product Grid */}
       <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8'>
-        {products.length === 0 && !loading ? (
-          <p className='col-span-full text-center text-gray-500'>No products found.</p>
+        {loading && products.length === 0 ? (
+          <div className="col-span-full text-center py-20 text-gray-400 font-medium">
+            Searching My Bazaar...
+          </div>
+        ) : products.length === 0 ? (
+          <div className='col-span-full text-center py-20 bg-gray-50 rounded-[2rem]'>
+            <p className='text-gray-500'>No products found matching your search.</p>
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchParams({})}
+                className="mt-4 text-black font-bold underline underline-offset-4"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
         ) : (
           products.map((product) => (
             <Link 
-              to={`/product/${product._id}`}
-              key={product._id}
+              to={`/product/${product._id}`} 
+              key={product._id} 
               className='group cursor-pointer'
             >
-              {/* Product Image Placeholder */}
-              <div className='bg-gray-100 rounded-xl h-72 w-full mb-4 flex items-center justify-center overflow-hidden'>
+              <div className='bg-gray-100 rounded-2xl h-72 w-full mb-4 flex items-center justify-center overflow-hidden shadow-sm border border-gray-50'>
                 {product.images && product.images.length > 0 ? (
                   <img 
-                    src={product.images[0]}
-                    alt={product.title}
-                    className='object-cover h-full w-full group-hover:scale-105 transition-transform duration-300'
+                    src={product.images[0]} 
+                    alt={product.title} 
+                    className='object-cover h-full w-full group-hover:scale-105 transition-transform duration-500' 
                   />
                 ) : (
-                  <span className='text-gray-400'>Image</span>
+                  <span className='text-gray-400 font-mono text-xs'>NO IMAGE</span>
                 )}
               </div>
-
-              {/* Product Info */}
-              <h3 className='font-semibold text-gray-900 truncate'>{product.title}</h3>
-              <p className='text-sm text-gray-500 capitalize'>{product.category}</p>
-              <div className='flex gap-3 mt-1 items-center'>
-                <span className='font-bold text-lg'>₹{product.price}</span>
+              <h3 className='font-bold text-gray-900 truncate tracking-tight'>
+                {product.title}
+              </h3>
+              <p className='text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1'>
+                {product.category}
+              </p>
+              <div className="flex justify-between items-center">
+                <p className='font-bold text-lg'>₹{product.price.toFixed(2)}</p>
+                {product.stock <= 5 && product.stock > 0 && (
+                  <span className="text-[10px] text-red-600 font-bold uppercase">Low Stock</span>
+                )}
               </div>
             </Link>
           ))
