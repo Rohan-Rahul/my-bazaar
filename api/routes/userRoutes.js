@@ -123,4 +123,61 @@ router.get('/profile', verifyToken, async(req,res)=>{
   }
 });
 
+//get current profile
+router.get('/profile', verifyToken, async(req,res)=>{
+  try{
+    const uesr = await User.findById(req.user.id).select('-password');
+    if(!user) return res.status(404).json({
+      message: 'User not found'
+    });
+
+    res.status(200).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin
+    });
+  } catch (error){
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+//update user profile
+router.put('/profile', verifyToken,async(req,res)=>{
+  try{
+    const user = await User.findById(req.user.id);
+    if(!user) return res.status(404).json({
+      message: 'User not found'
+    });
+
+    //update fields if provided
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+
+    //hash and update password only if a new one is provided
+    if(req.body.password){
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(req.body.password, salt);
+    }
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
+      message: 'Profile updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error updating profile',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

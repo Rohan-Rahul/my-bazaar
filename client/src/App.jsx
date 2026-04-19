@@ -11,6 +11,7 @@ import ProductForm from './pages/admin/ProductForm';
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Profile from './pages/Profile';
 
 import AdminLayout from "./components/AdminLayout";
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -42,6 +43,14 @@ function App() {
                 <Orders />
               </ProtectedRoute>
             } />
+
+            <Route 
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }/>
 
             {/* Admin Routes (Nested) */}
             <Route path='/admin' element={
