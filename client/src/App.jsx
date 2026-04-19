@@ -12,44 +12,51 @@ import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+import AdminLayout from "./components/AdminLayout";
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminProducts from './pages/admin/AdminProducts';
+
 function App() {
   return (
-    <AuthProvider>
+<AuthProvider>
       <CartProvider>
         <Router>
           <Navbar />
           <CartDrawer />
           <Routes>
+            {/* Public & Customer Routes */}
             <Route path='/' element={<Home />} />
             <Route path='/login' element={<Login />} />
-            <Route path='/signup' element={
-              <Signup />
-            }/>
+            <Route path='/signup' element={<Signup />} />
             <Route path='/product/:id' element={<ProductDetails />} /> 
-            <Route
-              path='/checkout'
-              element={
-                <ProtectedRoute>
-                  <Checkout />
-                </ProtectedRoute>
-              }            
-            /> 
-            <Route 
-              path='/orders'
-              element={
-                <ProtectedRoute>
-                  <Orders />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path='/admin/add-product'
-              element={
-                <ProtectedRoute adminOnly={true}>
-                  <ProductForm />
-                </ProtectedRoute>
-              }
-            />
+            
+            <Route path='/checkout' element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            } /> 
+            
+            <Route path='/orders' element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin Routes (Nested) */}
+            <Route path='/admin' element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              
+              <Route index element={<AdminDashboard />} />
+              <Route path='orders' element={<AdminOrders />} />
+              <Route path='products' element={<AdminProducts />} />
+              <Route path='add-product' element={<ProductForm />} />
+              <Route path='edit-product/:id' element={<ProductForm/>}/>
+            </Route>
+
           </Routes>
         </Router>
       </CartProvider>
