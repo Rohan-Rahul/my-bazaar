@@ -12,7 +12,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'my-bazaar-products',
-    allowed_formats: ['jpg','png','jpeg','webp'],
+    allowedFormats: ['jpg','png','jpeg','webp'],
   },
 });
 

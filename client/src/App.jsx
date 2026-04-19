@@ -7,6 +7,7 @@ import Signup from "./pages/Signup";
 import ProductDetails from "./pages/ProductDetails";
 import Checkout from './pages/Checkout';
 import Orders from './pages/Order';
+import ProductForm from './pages/admin/ProductForm';
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -38,6 +39,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Orders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/admin/add-product'
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <ProductForm />
                 </ProtectedRoute>
               }
             />

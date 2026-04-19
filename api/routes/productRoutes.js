@@ -56,9 +56,20 @@ router.post('/', verifyAdmin,upload.array('images',5), async (req, res) => {
     //extract cloudinary url from uploaded files
     const imageUrls = req.files.map(file => file.path);
 
+    //format variantOptions from string "S,M,L" to array ["S","M","L"]
+    let parsedVariantOptions = [];
+    if(req.body.variantOptions){
+      parsedVariantOptions = req.body.variantOptions.split(',').map(item => item.trim());
+    }
+
+    const isSeasonalBool = req.body.isSeasonal === 'true';
+
     const newProduct = new Product({
       ...req.body,
-    images: imageUrls});
+      variantOptions: parsedVariantOptions,
+      isSeasonal: isSeasonalBool,
+      images: imageUrls
+    });
     
     const savedProduct = await newProduct.save();
     res.status(201).json(savedProduct);
