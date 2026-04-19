@@ -39,6 +39,12 @@ function AdminLayout(){
           >
             Add Product
           </Link>
+          <Link
+            to="/admin/coupons"
+            className={`block px-4 py-3 rounded-xl font-medium transition-colors ${isActive("/admin/coupons")}`}
+          >
+            Add Coupons
+          </Link>
         </nav>
       </aside>
 

@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const {verifyToken} = require('../middleware/auth');
+const {verifyToken, verifyAdmin} = require('../middleware/auth');
 const router = express.Router();
 
 //helper function to generate token
@@ -170,6 +170,20 @@ router.get('/profile', verifyToken, async(req,res)=>{
     res.status(500).json({
       message: 'Server error fetching profile',
       error: error.message
+    });
+  }
+});
+
+//get all users (admin only)
+router.get('/', verifyAdmin, async(req,res) => {
+  try{
+    const users = (await User.find({}).select('-password')).toSorted({
+      createdAt: -1
+    });
+    res.json(users);
+  } catch(error){
+    res.status(500).json({
+      message: 'Error fetching users'
     });
   }
 });

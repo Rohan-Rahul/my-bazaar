@@ -18,6 +18,7 @@ import AdminLayout from "./components/AdminLayout";
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminProducts from './pages/admin/AdminProducts';
+import AdminCoupons from './pages/admin/AdminCoupons';
 
 function App() {
   return (
@@ -72,6 +73,7 @@ function App() {
               <Route path='products' element={<AdminProducts />} />
               <Route path='add-product' element={<ProductForm />} />
               <Route path='edit-product/:id' element={<ProductForm/>}/>
+              <Route path='coupons' element={<AdminCoupons/>}/>
             </Route>
 
           </Routes>

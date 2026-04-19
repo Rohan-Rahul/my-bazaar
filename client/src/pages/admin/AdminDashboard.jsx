@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import SalesChart from '../../components/SalesChart';
 import api from "../../services/api";
 import { Link } from "react-router-dom";
 
@@ -9,6 +10,7 @@ function AdminDashboard() {
     totalProducts: 0,
     recentOrders: [],
   });
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,11 +27,33 @@ function AdminDashboard() {
         // Calculate total revenue from all orders
         const revenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
 
+        // Process Chart Data (Last 7 Days)
+        const dailyStats = {};
+        
+        // Initialize last 7 days with zeros
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          dailyStats[dateStr] = { date: dateStr, revenue: 0, orders: 0 };
+        }
+
+        // Fill with real data
+        orders.forEach(order => {
+          const dateStr = new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          if (dailyStats[dateStr]) {
+            dailyStats[dateStr].revenue += order.totalPrice;
+            dailyStats[dateStr].orders += 1;
+          }
+        });
+
+        setChartData(Object.values(dailyStats));
+        
         setStats({
           totalRevenue: revenue,
           totalOrders: orders.length,
           totalProducts: products.length,
-          recentOrders: orders.slice(0, 5), // Get the 5 most recent orders
+          recentOrders: orders.slice(0, 5),
         });
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -41,69 +65,72 @@ function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading dashboard metrics...</div>;
+  if (loading) return <div className="p-8 font-medium text-gray-400">Syncing bazaar metrics...</div>;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-7xl mx-auto">
       <div>
         <h2 className="text-3xl font-bold tracking-tighter">Dashboard Overview</h2>
-        <p className="text-gray-500 mt-1">Summary of your store's performance.</p>
+        <p className="text-gray-500 mt-1">Real-time performance of My Bazaar.</p>
       </div>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <p className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2">Total Revenue</p>
-          <p className="text-3xl font-bold">₹{stats.totalRevenue.toFixed(2)}</p>
+        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Total Revenue</p>
+          <p className="text-3xl font-black">₹{stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <p className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2">Total Orders</p>
-          <p className="text-3xl font-bold">{stats.totalOrders}</p>
+        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Total Orders</p>
+          <p className="text-3xl font-black">{stats.totalOrders}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <p className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2">Total Products</p>
-          <p className="text-3xl font-bold">{stats.totalProducts}</p>
+        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Inventory Items</p>
+          <p className="text-3xl font-black">{stats.totalProducts}</p>
         </div>
       </div>
 
+      {/* Visual Analytics */}
+      <SalesChart data={chartData} />
+
       {/* Recent Orders Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="text-lg font-bold">Recent Orders</h3>
-          <Link to="/admin/orders" className="text-sm font-semibold text-blue-600 hover:underline">
-            View All
+      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-8 border-b border-gray-50 flex justify-between items-center">
+          <h3 className="text-xl font-bold tracking-tight">Recent Activity</h3>
+          <Link to="/admin/orders" className="text-xs font-black uppercase tracking-widest text-black hover:opacity-60 transition-opacity">
+            View Ledger →
           </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                <th className="p-4 font-medium">Order ID</th>
-                <th className="p-4 font-medium">Customer</th>
-                <th className="p-4 font-medium">Date</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium">Amount</th>
+              <tr className="bg-gray-50/50 text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                <th className="p-6 font-black">ID</th>
+                <th className="p-6 font-black">Customer</th>
+                <th className="p-6 font-black">Date</th>
+                <th className="p-6 font-black">Status</th>
+                <th className="p-6 font-black text-right">Settlement</th>
               </tr>
             </thead>
-            <tbody className="text-sm divide-y divide-gray-100">
+            <tbody className="text-sm divide-y divide-gray-50">
               {stats.recentOrders.map((order) => (
-                <tr key={order._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-4 font-mono text-xs">{order._id}</td>
-                  <td className="p-4">{order.user?.name || "Guest"}</td>
-                  <td className="p-4">{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                      order.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                <tr key={order._id} className="hover:bg-gray-50/50 transition-colors group">
+                  <td className="p-6 font-mono text-[10px] text-gray-400">#{order._id.slice(-6).toUpperCase()}</td>
+                  <td className="p-6 font-bold text-gray-900">{order.user?.name || "Guest User"}</td>
+                  <td className="p-6 text-gray-500">{new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</td>
+                  <td className="p-6">
+                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                      order.status === 'Delivered' ? 'bg-green-50 text-green-700' : 'bg-black text-white'
                     }`}>
                       {order.status}
                     </span>
                   </td>
-                  <td className="p-4 font-bold">₹{order.totalPrice.toFixed(2)}</td>
+                  <td className="p-6 text-right font-black text-lg">₹{order.totalPrice.toFixed(0)}</td>
                 </tr>
               ))}
               {stats.recentOrders.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-500">No recent orders found.</td>
+                  <td colSpan="5" className="p-20 text-center text-gray-400 italic">The bazaar is quiet. No recent transactions found.</td>
                 </tr>
               )}
             </tbody>

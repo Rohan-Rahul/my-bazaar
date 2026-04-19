@@ -1,8 +1,9 @@
 const express = require('express');
 const Product = require('../models/Product');
-const { verifyAdmin } = require('../middleware/auth');
+const { verifyToken, verifyAdmin } = require('../middleware/auth');
 const upload = require('../config/cloudinary');
 const router = express.Router();
+const User = require('../models/User');
 
 // get all products
 router.get('/', async (req, res) => {
@@ -64,6 +65,61 @@ router.post('/', verifyAdmin, upload.fields([
     res.status(201).json(savedProduct);
   } catch (error) {
     res.status(500).json({ message: 'Error creating product', error: error.message });
+  }
+});
+
+//add a review to a product
+router.post('/:id/reviews', verifyToken, async(req,res)=>{
+  const {rating, comment} = req.body;
+
+  try{
+    const product = await Product.findById(req.params.id);
+
+    const user = await User.findById(req.user.id);
+
+    if(!user){
+      return res.status(404).json({
+        message: 'User not found'
+      });
+    }
+
+    if(product){
+      //check if user already reviewed the product
+      const alreadyReviewed = product.reviews.find(
+        (r) => r.user.toString() === req.user.id.toString()
+      );
+
+      if(alreadyReviewed){
+        return res.status(400).json({
+          message: 'Product already reviewed'
+        });
+      }
+
+      const review = {
+        name: user.name,
+        rating: Number(rating),
+        comment,
+        user: req.user.id,
+      };
+
+      product.reviews.push(review);
+      product.numReviews = product.reviews.length;
+
+      //calculate overall average rating
+      product.rating = product.reviews.reduce((acc,item)=> item.rating + acc, 0) / product.reviews.length;
+
+      await product.save();
+      res.status(201).json({
+        message: 'Review added'
+      });
+    } else{
+      res.status(404).json({
+        message: 'Product not found'
+      });
+    }
+  } catch(error){
+      console.error("REVIEW ERROR:", error);
+      res.status(500).json({ message: 'Error adding review', error: error.message });
   }
 });
 

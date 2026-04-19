@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import { toast } from "react-hot-toast";
 
 function Checkout() {
   const { cartItems, fetchCart } = useCart();
@@ -18,19 +19,30 @@ function Checkout() {
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Coupon States
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
   const subtotal = cartItems.reduce(
     (acc, item) => acc + item.product.price * item.quantity,
     0
   );
 
-  // Fetch saved addresses on component mount
+  // Calculate discount and final total
+  const discountAmount = appliedCoupon 
+    ? (appliedCoupon.discountType === 'percentage' 
+        ? (subtotal * appliedCoupon.discountValue) / 100 
+        : appliedCoupon.discountValue)
+    : 0;
+
+  const finalTotal = subtotal - discountAmount;
+
   useEffect(() => {
     const fetchSavedAddresses = async () => {
       try {
         const { data } = await api.get('/users/profile');
         setSavedAddresses(data.addresses || []);
-        
-        // Auto-select the default address if one exists
         const defaultAddr = data.addresses?.find(a => a.isDefault);
         if (defaultAddr) {
           setAddress({
@@ -41,11 +53,26 @@ function Checkout() {
           });
         }
       } catch (error) {
-        console.error("Error loading saved addresses:", error);
+        console.error("Error loading addresses");
       }
     };
     fetchSavedAddresses();
   }, []);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setValidatingCoupon(true);
+    try {
+      const { data } = await api.post('/coupons/validate', { code: couponCode });
+      setAppliedCoupon(data);
+      toast.success(`Coupon "${data.code}" applied!`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Invalid coupon");
+      setAppliedCoupon(null);
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -63,14 +90,15 @@ function Checkout() {
 
     const res = await loadRazorpay();
     if(!res){
-      alert('Razorpay SDK failed to load. Check your internet.');
+      alert('Razorpay SDK failed to load.');
       setLoading(false);
       return;
     }
 
     try {
+      // Create Razorpay order with the finalTotal (after discount)
       const { data: order } = await api.post('/orders/razorpay-order', {
-        amount: subtotal
+        amount: finalTotal 
       });
 
       const options = {
@@ -78,7 +106,7 @@ function Checkout() {
         amount: order.amount,
         currency: order.currency,
         name: 'My Bazaar',
-        description: 'Order Payment',
+        description: appliedCoupon ? `Discount Applied: ${appliedCoupon.code}` : 'Order Payment',
         order_id: order.id,
         handler: async(response)=>{
           try {
@@ -96,30 +124,27 @@ function Checkout() {
                   selectedColor: item.selectedColor
                 })),
                 shippingAddress: address,
-                totalPrice: subtotal,
-                userEmail: user?.email 
+                totalPrice: finalTotal, // Save discounted price in DB
+                userEmail: user?.email,
+                couponUsed: appliedCoupon?.code || null
               }
             };
 
             await api.post('/orders/verify', verificationData);
             fetchCart();
-            alert('Payment successful! order placed.');
+            toast.success('Order placed successfully!');
             navigate('/orders');
           } catch(error){
-            alert('Payment verification failed');
+            toast.error('Payment verification failed');
           }
         },
-        prefill: {
-          name: user?.name || 'Customer',
-          email: user?.email || '',
-        },
+        prefill: { name: user?.name || '', email: user?.email || '' },
         theme: {color: '#000000'},
       };
 
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
     } catch(error){
-      console.error("PAYMENT ERROR DETAILS:", error.response?.data || error);
       alert('Error initiating payment');
     } finally {
       setLoading(false);
@@ -127,11 +152,11 @@ function Checkout() {
   };
 
   return (
-    <div className='max-w-4xl mx-auto p-8 grid grid-cols-1 md:grid-cols-2 gap-12'>
-      <div>
+    <div className='max-w-6xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-3 gap-12'>
+      <div className="lg:col-span-2">
         <h2 className='text-2xl font-bold mb-6'>Shipping Details</h2>
-
-        {/* Saved Addresses Section */}
+        
+        {/* Saved Addresses Selector */}
         {savedAddresses.length > 0 && (
           <div className="mb-8">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3">Quick Select Address</p>
@@ -141,10 +166,7 @@ function Checkout() {
                   key={addr._id}
                   type="button"
                   onClick={() => setAddress({
-                    address: addr.address,
-                    city: addr.city,
-                    postalCode: addr.postalCode,
-                    country: addr.country
+                    address: addr.address, city: addr.city, postalCode: addr.postalCode, country: addr.country
                   })}
                   className="flex-shrink-0 text-left p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-black transition-all max-w-[180px]"
                 >
@@ -157,64 +179,73 @@ function Checkout() {
         )}
 
         <form onSubmit={handlePayment} className='space-y-4'>
-          <input
-            className='w-full p-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-black'
-            placeholder='Full Street Address'
-            value={address.address}
-            onChange={(e) => setAddress({ ...address, address: e.target.value })}
-            required
-          />
+          <input className='w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-black transition-all' placeholder='Full Street Address' value={address.address} onChange={(e) => setAddress({ ...address, address: e.target.value })} required />
           <div className='grid grid-cols-2 gap-4'>
-            <input
-              className='w-full p-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-black'
-              placeholder='City'
-              value={address.city}
-              onChange={(e) => setAddress({ ...address, city: e.target.value })}
-              required
-            />
-            <input
-              className='w-full p-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-black'
-              placeholder='Postal Code'
-              value={address.postalCode}
-              onChange={(e) => setAddress({ ...address, postalCode: e.target.value })}
-              required
-            />
+            <input className='w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-black transition-all' placeholder='City' value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} required />
+            <input className='w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-black transition-all' placeholder='Postal Code' value={address.postalCode} onChange={(e) => setAddress({ ...address, postalCode: e.target.value })} required />
           </div>
-          <input
-            className='w-full p-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-black'
-            placeholder='Country'
-            value={address.country}
-            onChange={(e) => setAddress({ ...address, country: e.target.value })}
-            required
-          />
+          <input className='w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-black transition-all' placeholder='Country' value={address.country} onChange={(e) => setAddress({ ...address, country: e.target.value })} required />
 
-          <button
-            type='submit'
-            disabled={loading || cartItems.length === 0}
-            className='w-full bg-black text-white py-4 rounded-full font-bold mt-4 disabled:bg-gray-400'
-          >
-            {loading ? "Processing..." : `Confirm & Pay ₹${subtotal.toFixed(2)}`}
+          <button type='submit' disabled={loading || cartItems.length === 0} className='w-full bg-black text-white py-5 rounded-2xl font-black mt-4 disabled:bg-gray-400 shadow-xl shadow-black/10'>
+            {loading ? "Processing..." : `Confirm & Pay ₹${finalTotal.toFixed(2)}`}
           </button>
         </form>
       </div>
 
-      <div className='bg-gray-50 p-8 rounded-[2rem] h-fit border border-gray-100'>
-        <h2 className='text-xl font-bold mb-6'>Order Summary</h2>
-        <div className='space-y-4'>
-          {cartItems.map((item, idx) => (
-            <div key={idx} className='flex justify-between text-sm'>
-              <span className="flex flex-col">
-                <span className="font-medium">{item.product.title} (x{item.quantity})</span>
-                {item.selectedColor && <span className="text-gray-400 text-xs">Color: {item.selectedColor}</span>}
-                {item.selectedOption && <span className="text-gray-400 text-xs">Size: {item.selectedOption}</span>}
-              </span>
-              <span className="font-mono">₹{(item.product.price * item.quantity).toFixed(2)}</span>
+      {/* Summary Sidebar with Coupon */}
+      <div className='lg:col-span-1'>
+        <div className='bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100 sticky top-24'>
+          <h2 className='text-xl font-bold mb-6'>Order Summary</h2>
+          
+          <div className='space-y-4 mb-8'>
+            {cartItems.map((item, idx) => (
+              <div key={idx} className='flex justify-between text-sm'>
+                <span className="text-gray-600">{item.product.title} (x{item.quantity})</span>
+                <span className="font-bold">₹{(item.product.price * item.quantity).toFixed(0)}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Coupon Input */}
+          <div className="mb-8 pt-6 border-t border-gray-200">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Promo Code</p>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Enter Code"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                className="flex-1 bg-white px-4 py-2 rounded-xl text-sm border-none outline-none focus:ring-1 focus:ring-black"
+              />
+              <button 
+                type="button"
+                onClick={handleApplyCoupon}
+                disabled={validatingCoupon || appliedCoupon}
+                className="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-30"
+              >
+                {validatingCoupon ? '...' : 'Apply'}
+              </button>
             </div>
-          ))}
-          <hr className='border-gray-200' />
-          <div className='flex justify-between font-bold text-lg pt-2'>
-            <span>Total</span>
-            <span>₹{subtotal.toFixed(2)}</span>
+            {appliedCoupon && (
+              <p className="mt-2 text-[10px] text-green-600 font-bold">✓ Coupon "{appliedCoupon.code}" Applied</p>
+            )}
+          </div>
+
+          <div className="space-y-3 pt-4 border-t border-gray-200">
+            <div className='flex justify-between text-sm text-gray-500'>
+              <span>Subtotal</span>
+              <span>₹{subtotal.toFixed(2)}</span>
+            </div>
+            {appliedCoupon && (
+              <div className='flex justify-between text-sm text-green-600 font-bold'>
+                <span>Discount</span>
+                <span>- ₹{discountAmount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className='flex justify-between font-black text-2xl pt-2 border-t border-gray-100'>
+              <span>Total</span>
+              <span>₹{finalTotal.toFixed(2)}</span>
+            </div>
           </div>
         </div>
       </div>
